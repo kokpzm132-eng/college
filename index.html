@@ -18,6 +18,8 @@
             margin: 0;
             padding: 0;
             direction: rtl;
+            user-select: none;
+            -webkit-user-select: none;
         }
         header {
             background: var(--primary-gradient);
@@ -49,9 +51,9 @@
             background: white;
             color: #1e3a8a;
             border: none;
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 8px;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.15);
@@ -167,20 +169,43 @@
             color: #1e293b;
         }
         .lectures-grid {
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 12px;
         }
-        @media(min-width: 600px) {
-            .lectures-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        
+        /* تصميم بطاقة المحاضرة مع السحب (مثل تطبيق الساعة) */
+        .lecture-wrapper {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #ef4444; /* خلفية زر الحذف بالخلف */
+        }
+        .delete-action-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 90px;
+            height: 100%;
+            background: #ef4444;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            z-index: 1;
         }
         .lecture-box {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
             padding: 12px;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.2s ease;
+            touch-action: pan-y;
         }
         .lecture-title {
             font-weight: bold;
@@ -193,6 +218,13 @@
             color: #64748b;
             margin: 3px 0;
         }
+        .hint-swipe {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -257,19 +289,6 @@
             cursor: pointer;
             font-size: 0.85rem;
         }
-        .notification-banner {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1e40af;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            text-align: center;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
     </style>
 </head>
 <body>
@@ -284,11 +303,6 @@
     </header>
 
     <div class="container">
-
-        <div id="notifBanner" class="notification-banner" style="display:none;">
-            <span>تفعيل إشعارات الجوال للمحاضرات؟</span>
-            <button class="btn-primary" style="padding: 4px 10px; font-size: 0.7rem;" onclick="requestNotificationPermission()">تفعيل</button>
-        </div>
 
         <div class="next-lecture-card">
             <span class="next-tag">المحاضرة القادمة</span>
@@ -318,6 +332,7 @@
                 <h2 id="activeDayTitle">الأحد</h2>
                 <button class="btn-primary" style="font-size: 0.75rem; padding: 6px 10px;" onclick="openModalForActiveDay()">+ إضافة لهذا اليوم</button>
             </div>
+            <div class="hint-swipe">💡 اسحب أي محاضرة لجهة اليسار لحذفها (مثل المنبه)</div>
             <div class="lectures-grid" id="lecturesContainer"></div>
         </div>
 
@@ -372,6 +387,18 @@
         </div>
     </div>
 
+    <!-- نافذة تأكيد الحذف -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content" style="text-align: center;">
+            <h3 style="color: #ef4444; margin-top: 0;">⚠️ تأكيد الحذف</h3>
+            <p id="confirmText" style="font-size: 0.9rem; color: #475569;">هل أنت متأكد من حذف هذه المحاضرة؟</p>
+            <div class="modal-btns">
+                <button class="btn-secondary" onclick="closeConfirmModal()">إلغاء</button>
+                <button class="btn-primary" style="background: #ef4444;" id="yesDeleteBtn">حذف</button>
+            </div>
+        </div>
+    </div>
+
     <!-- نافذة الإعدادات -->
     <div class="modal" id="settingsModal">
         <div class="settings-modal-content">
@@ -391,20 +418,7 @@
                 <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioFile(event)" style="margin-top: 2px; border: none; width: 100%;">
             </div>
 
-            <div style="border-top: 2px solid #f1f5f9; margin-top: 15px; padding-top: 12px;">
-                <label style="font-size: 0.75rem; color: #ef4444; font-weight: bold;">حذف محاضرة:</label>
-                <div style="display: flex; gap: 6px; margin-top: 4px;">
-                    <select id="deleteDaySelect" onchange="updateDeleteList()" style="margin-top: 0;">
-                        <option value="" disabled selected>اليوم...</option>
-                    </select>
-                    <select id="deleteLectureSelect" style="margin-top: 0;">
-                        <option value="" disabled selected>المادة...</option>
-                    </select>
-                </div>
-                <button class="btn-primary" style="background: #ef4444; width: 100%; margin-top: 8px; font-size: 0.8rem;" onclick="confirmDelete()">حذف المادة</button>
-            </div>
-
-            <div class="modal-btns" style="margin-top: 15px;">
+            <div class="modal-btns" style="margin-top: 20px;">
                 <button class="btn-secondary" style="width: 100%;" onclick="closeSettingsModal()">إغلاق</button>
             </div>
         </div>
@@ -424,32 +438,17 @@
         };
 
         let customAudioData = localStorage.getItem('officialAudioData') || null;
-        let lastNotifiedKey = localStorage.getItem('lastNotifiedKey') || null;
+        let pendingDeleteDay = null;
+        let pendingDeleteIdx = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             const savedSound = localStorage.getItem('officialSound') || 'classic';
             document.getElementById('soundSelect').value = savedSound;
             if(savedSound === 'custom') document.getElementById('custom-audio-box').style.display = 'block';
             
-            if (window.Notification && Notification.permission !== "granted") {
-                document.getElementById('notifBanner').style.display = 'flex';
-            }
-
             renderTabs();
             renderActiveDay();
-            initDeleteDropdowns();
         });
-
-        function requestNotificationPermission() {
-            if (window.Notification) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        document.getElementById('notifBanner').style.display = 'none';
-                        new Notification("تم التفعيل بنجاح!", { body: ستصلك إشعارات المحاضرات هنا. });
-                    }
-                });
-            }
-        }
 
         function saveSoundPreference() {
             const val = document.getElementById('soundSelect').value;
@@ -514,28 +513,122 @@
 
             let list = timetableData[activeTab] || [];
             if(list.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 15px; font-size: 0.85rem;">لا توجد محاضرات مسجلة في هذا اليوم</div>`;
+                container.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 15px; font-size: 0.85rem;">لا توجد محاضرات مسجلة في هذا اليوم</div>`;
                 return;
             }
 
-            list.forEach(lec => {
-                container.innerHTML += `
-                    <div class="lecture-box">
+            list.forEach((lec, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'lecture-wrapper';
+                wrapper.innerHTML = `
+                    <div class="delete-action-bg">حذف</div>
+                    <div class="lecture-box" data-day="${activeTab}" data-index="${idx}">
                         <div class="lecture-title">💻 ${lec.name}</div>
                         <div class="lecture-info">⏰ ${lec.time}</div>
                         <div class="lecture-info">📍 قاعة: ${lec.hall} | ${lec.floor}</div>
                     </div>
                 `;
+                container.appendChild(wrapper);
+                initSwipeToDelete(wrapper, activeTab, idx, lec.name);
             });
+        }
+
+        // تفاعل السحب لليسار مثل تطبيق الساعة
+        function initSwipeToDelete(wrapper, day, idx, name) {
+            const box = wrapper.querySelector('.lecture-box');
+            let startX = 0;
+            let currentX = 0;
+            let isSwiping = false;
+            const threshold = -80; // المسافة المطلوبة لفتح زر الحذف
+
+            box.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                isSwiping = true;
+                box.style.transition = 'none';
+            }, {passive: true});
+
+            box.addEventListener('touchmove', (e) => {
+                if(!isSwiping) return;
+                currentX = e.touches[0].clientX - startX;
+                // السماح فقط بالسحب لليسار (قيمة سالبة) وبحدود معينة
+                if(currentX < 0) {
+                    box.style.transform = `translateX(${Math.max(currentX, -100)}px)`;
+                } else {
+                    box.style.transform = `translateX(0px)`;
+                }
+            }, {passive: true});
+
+            box.addEventListener('touchend', () => {
+                if(!isSwiping) return;
+                isSwiping = false;
+                box.style.transition = 'transform 0.2s ease';
+                if(currentX < threshold) {
+                    // ثبت البطارية مفتوحة أو اطلب الحذف مباشرة
+                    box.style.transform = `translateX(-90px)`;
+                    triggerDeleteConfirmation(day, idx, name, box);
+                } else {
+                    box.style.transform = `translateX(0px)`;
+                }
+                currentX = 0;
+            });
+
+            // دعم الماوس للكمبيوتر أيضاً للتجربة
+            let mStartX = 0;
+            let mDragging = false;
+            box.addEventListener('mousedown', (e) => {
+                mStartX = e.clientX;
+                mDragging = true;
+                box.style.transition = 'none';
+            });
+            window.addEventListener('mousemove', (e) => {
+                if(!mDragging) return;
+                let diff = e.clientX - mStartX;
+                if(diff < 0) {
+                    box.style.transform = `translateX(${Math.max(diff, -100)}px)`;
+                }
+            });
+            window.addEventListener('mouseup', (e) => {
+                if(!mDragging) return;
+                mDragging = false;
+                box.style.transition = 'transform 0.2s ease';
+                let diff = e.clientX - mStartX;
+                if(diff < threshold) {
+                    box.style.transform = `translateX(-90px)`;
+                    triggerDeleteConfirmation(day, idx, name, box);
+                } else {
+                    box.style.transform = `translateX(0px)`;
+                }
+            });
+
+            // الضغط على زر الحذف الظاهر بالخلف
+            wrapper.querySelector('.delete-action-bg').onclick = () => {
+                triggerDeleteConfirmation(day, idx, name, box);
+            };
+        }
+
+        function triggerDeleteConfirmation(day, idx, name, boxElem) {
+            pendingDeleteDay = day;
+            pendingDeleteIdx = idx;
+            document.getElementById('confirmText').innerText = `هل تريد حذف محاضرة "${name}"؟`;
+            document.getElementById('confirmModal').style.display = 'flex';
+            
+            // زر تأكيد الحذف الفعلي
+            document.getElementById('yesDeleteBtn').onclick = function() {
+                timetableData[pendingDeleteDay].splice(pendingDeleteIdx, 1);
+                localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
+                closeConfirmModal();
+                renderActiveDay();
+            };
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            renderActiveDay(); // لإعادة ضبط مكان البطاقات
         }
 
         function openModal() { document.getElementById('lectureModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('lectureModal').style.display = 'none'; }
-        
-        function openSettingsModal() { 
-            initDeleteDropdowns();
-            document.getElementById('settingsModal').style.display = 'flex'; 
-        }
+        function openSettingsModal() { document.getElementById('settingsModal').style.display = 'flex'; }
         function closeSettingsModal() { document.getElementById('settingsModal').style.display = 'none'; }
 
         function openModalForActiveDay() {
@@ -569,48 +662,11 @@
             renderActiveDay();
         }
 
-        function initDeleteDropdowns() {
-            const select = document.getElementById('deleteDaySelect');
-            select.innerHTML = '<option value="" disabled selected>اليوم...</option>';
-            days.forEach(d => {
-                if(timetableData[d] && timetableData[d].length > 0) {
-                    select.innerHTML += `<option value="${d}">${d}</option>`;
-                }
-            });
-            document.getElementById('deleteLectureSelect').innerHTML = '<option value="" disabled selected>المادة...</option>';
-        }
-
-        function updateDeleteList() {
-            const d = document.getElementById('deleteDaySelect').value;
-            const lecSelect = document.getElementById('deleteLectureSelect');
-            lecSelect.innerHTML = '<option value="" disabled selected>المادة...</option>';
-            if(timetableData[d]) {
-                timetableData[d].forEach((l, idx) => {
-                    lecSelect.innerHTML += `<option value="${idx}">${l.name} (${l.time})</option>`;
-                });
-            }
-        }
-
-        function confirmDelete() {
-            const d = document.getElementById('deleteDaySelect').value;
-            const idx = document.getElementById('deleteLectureSelect').value;
-            if(!d || idx === "") {
-                alert("الرجاء اختيار اليوم والمادة أولاً");
-                return;
-            }
-            timetableData[d].splice(idx, 1);
-            localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
-            closeSettingsModal();
-            renderActiveDay();
-            alert("تم الحذف بنجاح");
-        }
-
         function updateCountdown() {
             const now = new Date();
             const curDayIdx = now.getDay();
             let minDiff = Infinity;
             let nextLecInfo = null;
-            let lectureUniqueKey = null;
 
             for(let i=0; i<7; i++) {
                 let targetIdx = (curDayIdx + i) % 7;
@@ -629,25 +685,12 @@
                         if(diff > 0 && diff < minDiff) {
                             minDiff = diff;
                             nextLecInfo = lec;
-                            lectureUniqueKey = `${dayName}-${lec.name}-${lec.time}`;
                         }
                     });
                 }
             }
 
             if(nextLecInfo) {
-                // فحص إذا حان وقت المحاضرة (أقل من 5 ثواني وبدأت)
-                if (minDiff <= 5000 && lastNotifiedKey !== lectureUniqueKey) {
-                    lastNotifiedKey = lectureUniqueKey;
-                    localStorage.setItem('lastNotifiedKey', lastNotifiedKey);
-                    playAlertSound();
-                    if (window.Notification && Notification.permission === "granted") {
-                        new Notification(`حان موعد محاضرة: ${nextLecInfo.name}`, {
-                            body: `القاعة: ${nextLecInfo.hall} - ${nextLecInfo.floor}`
-                        });
-                    }
-                }
-
                 let hrs = Math.floor(minDiff / (1000 * 60 * 60));
                 let mins = Math.floor((minDiff % (1000 * 60 * 60)) / (1000 * 60));
                 let secs = Math.floor((minDiff % (1000 * 60)) / 1000);
