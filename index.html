@@ -23,112 +23,123 @@
             background: var(--primary-gradient);
             color: white;
             text-align: center;
-            padding: 40px 15px 80px 15px;
+            padding: 30px 15px 70px 15px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             position: relative;
         }
         header h1 {
-            font-size: 2rem;
+            font-size: 1.6rem;
             margin: 0 0 5px 0;
             font-weight: 800;
         }
         header p {
             margin: 0;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             opacity: 0.85;
         }
         .header-actions {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 15px;
+            left: 15px;
             display: flex;
-            gap: 8px;
+            gap: 6px;
             z-index: 10;
         }
         .btn-action {
             background: white;
             color: #1e3a8a;
             border: none;
-            padding: 8px 14px;
+            padding: 6px 10px;
             border-radius: 8px;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            white-space: nowrap;
         }
-        .btn-action:hover {
-            background: #f8fafc;
+        .btn-action:active {
+            transform: scale(0.95);
         }
         .container {
             max-width: 900px;
-            margin: -50px auto 40px auto;
-            padding: 0 15px;
+            margin: -40px auto 30px auto;
+            padding: 0 12px;
             position: relative;
             z-index: 5;
         }
         .next-lecture-card {
             background: #1e293b;
             color: white;
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 14px;
+            padding: 15px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             text-align: center;
             border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .next-tag {
             background: #3b82f6;
             color: white;
-            font-size: 0.75rem;
-            padding: 3px 10px;
+            font-size: 0.7rem;
+            padding: 2px 8px;
             border-radius: 20px;
             display: inline-block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: bold;
         }
         .countdown-grid {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin: 15px 0;
+            gap: 10px;
+            margin: 10px 0;
+            width: 100%;
         }
         .time-box {
             background: rgba(255,255,255,0.08);
-            padding: 8px 15px;
-            border-radius: 10px;
-            min-width: 50px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            flex: 1;
+            max-width: 70px;
         }
         .time-box span {
             display: block;
         }
         .time-num {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: bold;
             color: #60a5fa;
         }
         .time-label {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             opacity: 0.7;
         }
         .days-tabs {
             display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 20px;
+            justify-content: flex-start;
+            gap: 6px;
+            margin-bottom: 15px;
             overflow-x: auto;
             padding-bottom: 5px;
+            scrollbar-width: none;
+        }
+        .days-tabs::-webkit-scrollbar {
+            display: none;
         }
         .day-tab {
             background: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-size: 0.95rem;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
             font-weight: bold;
             color: #64748b;
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .day-tab.active {
             background: #2563eb;
@@ -137,8 +148,8 @@
         }
         .day-content-card {
             background: white;
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 14px;
+            padding: 15px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
             margin-bottom: 20px;
         }
@@ -146,75 +157,73 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
         .day-header-row h2 {
             margin: 0;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #1e293b;
         }
         .lectures-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 15px;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        @media(min-width: 600px) {
+            .lectures-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
         .lecture-box {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 15px;
-            position: relative;
-            transition: transform 0.2s;
-        }
-        .lecture-box:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-radius: 10px;
+            padding: 12px;
         }
         .lecture-title {
             font-weight: bold;
-            font-size: 1.05rem;
+            font-size: 1rem;
             color: #1e293b;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            margin-bottom: 6px;
         }
         .lecture-info {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #64748b;
-            margin: 4px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            margin: 3px 0;
         }
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            padding: 15px;
+            box-sizing: border-box;
         }
         .modal-content, .settings-modal-content {
             background: white;
-            padding: 20px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 380px;
+            padding: 18px;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 360px;
             text-align: right;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .modal-content input, .modal-content select, .settings-modal-content select {
             width: 100%;
-            padding: 9px;
+            padding: 10px;
             margin-top: 6px;
             border: 1px solid #cbd5e1;
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 0.9rem;
+            background: #fff;
         }
         .time-row {
             display: flex;
@@ -223,25 +232,43 @@
         }
         .modal-btns {
             display: flex;
-            justify-content: space-between;
+            gap: 8px;
             margin-top: 15px;
+        }
+        .modal-btns button {
+            flex: 1;
         }
         .btn-primary {
             background: #2563eb;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 10px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 0.85rem;
         }
         .btn-secondary {
             background: #64748b;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 10px;
             border-radius: 8px;
             cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .notification-banner {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            text-align: center;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
     </style>
 </head>
@@ -249,7 +276,7 @@
 
     <header>
         <div class="header-actions">
-            <button class="btn-action" onclick="openModal()">+ إضافة محاضرة</button>
+            <button class="btn-action" onclick="openModal()">+ إضافة</button>
             <button class="btn-action" onclick="openSettingsModal()">⚙️ الإعدادات</button>
         </div>
         <h1>الجدول الدراسي الترم الأول</h1>
@@ -258,10 +285,15 @@
 
     <div class="container">
 
+        <div id="notifBanner" class="notification-banner" style="display:none;">
+            <span>تفعيل إشعارات الجوال للمحاضرات؟</span>
+            <button class="btn-primary" style="padding: 4px 10px; font-size: 0.7rem;" onclick="requestNotificationPermission()">تفعيل</button>
+        </div>
+
         <div class="next-lecture-card">
             <span class="next-tag">المحاضرة القادمة</span>
-            <div id="next-lecture-title" style="font-size: 1.25rem; font-weight: bold; margin: 5px 0;">جاري التحميل...</div>
-            <div id="next-lecture-loc" style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 10px;">--</div>
+            <div id="next-lecture-title" style="font-size: 1.1rem; font-weight: bold; margin: 4px 0;">جاري التحميل...</div>
+            <div id="next-lecture-loc" style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 8px;">--</div>
             
             <div class="countdown-grid">
                 <div class="time-box">
@@ -284,10 +316,9 @@
         <div class="day-content-card">
             <div class="day-header-row">
                 <h2 id="activeDayTitle">الأحد</h2>
-                <button class="btn-primary" style="font-size: 0.8rem; padding: 5px 12px;" onclick="openModalForActiveDay()">+ إضافة لهذا اليوم</button>
+                <button class="btn-primary" style="font-size: 0.75rem; padding: 6px 10px;" onclick="openModalForActiveDay()">+ إضافة لهذا اليوم</button>
             </div>
-            <div class="lectures-grid" id="lecturesContainer">
-            </div>
+            <div class="lectures-grid" id="lecturesContainer"></div>
         </div>
 
     </div>
@@ -295,9 +326,9 @@
     <!-- نافذة إضافة محاضرة -->
     <div class="modal" id="lectureModal">
         <div class="modal-content">
-            <h3 style="margin-top: 0; color: #1e293b;">إضافة محاضرة جديدة</h3>
+            <h3 style="margin-top: 0; color: #1e293b; font-size: 1.1rem;">إضافة محاضرة جديدة</h3>
             
-            <label style="font-size: 0.8rem; color: #64748b;">اختر اليوم:</label>
+            <label style="font-size: 0.75rem; color: #64748b;">اختر اليوم:</label>
             <select id="modalDaySelect">
                 <option value="الأحد">الأحد</option>
                 <option value="الاثنين">الاثنين</option>
@@ -310,7 +341,7 @@
             <input type="text" id="hall" placeholder="رقم القاعة (مثلاً: 119)">
             <input type="text" id="floor" placeholder="المبنى والدور (مثلاً: مبنى 2 - الدور 1)">
 
-            <label style="font-size: 0.8rem; color: #64748b; margin-top: 8px; display: block;">وقت المحاضرة:</label>
+            <label style="font-size: 0.75rem; color: #64748b; margin-top: 8px; display: block;">وقت المحاضرة:</label>
             <div class="time-row">
                 <select id="lectureHour">
                     <option value="" disabled selected>الساعة</option>
@@ -341,29 +372,28 @@
         </div>
     </div>
 
-    <!-- نافذة الإعدادات والحذف -->
+    <!-- نافذة الإعدادات -->
     <div class="modal" id="settingsModal">
         <div class="settings-modal-content">
-            <h3 style="margin-top: 0; color: #1e293b;">⚙️ الإعدادات المتقدمة</h3>
+            <h3 style="margin-top: 0; color: #1e293b; font-size: 1.1rem;">⚙️ الإعدادات المتقدمة</h3>
             
-            <label style="font-size: 0.8rem; color: #64748b;">🔊 نغمة تنبيه المحاضرات:</label>
-            <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+            <label style="font-size: 0.75rem; color: #64748b;">🔊 نغمة التنبيه:</label>
+            <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
                 <select id="soundSelect" onchange="saveSoundPreference()" style="margin-top: 0;">
                     <option value="classic">رنين افتراضي</option>
                     <option value="bell">جرس مدرسي</option>
-                    <option value="double">تنبيه مزدوج سريع</option>
                     <option value="custom">📁 صوت مخصص من الجهاز</option>
                 </select>
-                <button class="btn-secondary" style="padding: 7px 12px; font-size: 0.8rem;" onclick="testSelectedSound()">تجربة</button>
+                <button class="btn-secondary" style="padding: 10px; font-size: 0.75rem;" onclick="testSelectedSound()">تجربة</button>
             </div>
-            <div id="custom-audio-box" style="display: none; font-size: 0.8rem; color: #475569; margin-top: 8px;">
-                <span>رفع ملف صوتي (MP3/WAV):</span>
-                <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioFile(event)" style="margin-top: 3px; border: none; width: 100%;">
+            <div id="custom-audio-box" style="display: none; font-size: 0.75rem; color: #475569; margin-top: 6px;">
+                <span>ملف صوتي (MP3/WAV):</span>
+                <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioFile(event)" style="margin-top: 2px; border: none; width: 100%;">
             </div>
 
-            <div style="border-top: 2px solid #f1f5f9; margin-top: 20px; padding-top: 15px;">
-                <label style="font-size: 0.8rem; color: #ef4444; font-weight: bold;">حذف محاضرة محددة:</label>
-                <div style="display: flex; gap: 6px; margin-top: 6px;">
+            <div style="border-top: 2px solid #f1f5f9; margin-top: 15px; padding-top: 12px;">
+                <label style="font-size: 0.75rem; color: #ef4444; font-weight: bold;">حذف محاضرة:</label>
+                <div style="display: flex; gap: 6px; margin-top: 4px;">
                     <select id="deleteDaySelect" onchange="updateDeleteList()" style="margin-top: 0;">
                         <option value="" disabled selected>اليوم...</option>
                     </select>
@@ -371,10 +401,10 @@
                         <option value="" disabled selected>المادة...</option>
                     </select>
                 </div>
-                <button class="btn-primary" style="background: #ef4444; width: 100%; margin-top: 10px; font-size: 0.85rem;" onclick="confirmDelete()">حذف المادة المحددة</button>
+                <button class="btn-primary" style="background: #ef4444; width: 100%; margin-top: 8px; font-size: 0.8rem;" onclick="confirmDelete()">حذف المادة</button>
             </div>
 
-            <div class="modal-btns" style="margin-top: 20px;">
+            <div class="modal-btns" style="margin-top: 15px;">
                 <button class="btn-secondary" style="width: 100%;" onclick="closeSettingsModal()">إغلاق</button>
             </div>
         </div>
@@ -394,15 +424,32 @@
         };
 
         let customAudioData = localStorage.getItem('officialAudioData') || null;
+        let lastNotifiedKey = localStorage.getItem('lastNotifiedKey') || null;
 
         window.addEventListener('DOMContentLoaded', () => {
             const savedSound = localStorage.getItem('officialSound') || 'classic';
             document.getElementById('soundSelect').value = savedSound;
             if(savedSound === 'custom') document.getElementById('custom-audio-box').style.display = 'block';
+            
+            if (window.Notification && Notification.permission !== "granted") {
+                document.getElementById('notifBanner').style.display = 'flex';
+            }
+
             renderTabs();
             renderActiveDay();
             initDeleteDropdowns();
         });
+
+        function requestNotificationPermission() {
+            if (window.Notification) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        document.getElementById('notifBanner').style.display = 'none';
+                        new Notification("تم التفعيل بنجاح!", { body: ستصلك إشعارات المحاضرات هنا. });
+                    }
+                });
+            }
+        }
 
         function saveSoundPreference() {
             const val = document.getElementById('soundSelect').value;
@@ -427,7 +474,7 @@
         function playAlertSound() {
             const soundType = document.getElementById('soundSelect').value;
             if(soundType === 'custom' && customAudioData) {
-                new Audio(customAudioData).play().catch(e => console.log(e));
+                new Audio(customAudioData).play().catch(e => {});
                 return;
             }
             try {
@@ -435,11 +482,11 @@
                 let osc = ctx.createOscillator();
                 let gain = ctx.createGain();
                 osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 osc.start();
-                osc.stop(ctx.currentTime + 0.5);
+                osc.stop(ctx.currentTime + 0.4);
             } catch(e) {}
         }
 
@@ -467,7 +514,7 @@
 
             let list = timetableData[activeTab] || [];
             if(list.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 20px;">لا توجد محاضرات مسجلة في هذا اليوم</div>`;
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 15px; font-size: 0.85rem;">لا توجد محاضرات مسجلة في هذا اليوم</div>`;
                 return;
             }
 
@@ -563,6 +610,7 @@
             const curDayIdx = now.getDay();
             let minDiff = Infinity;
             let nextLecInfo = null;
+            let lectureUniqueKey = null;
 
             for(let i=0; i<7; i++) {
                 let targetIdx = (curDayIdx + i) % 7;
@@ -581,12 +629,25 @@
                         if(diff > 0 && diff < minDiff) {
                             minDiff = diff;
                             nextLecInfo = lec;
+                            lectureUniqueKey = `${dayName}-${lec.name}-${lec.time}`;
                         }
                     });
                 }
             }
 
             if(nextLecInfo) {
+                // فحص إذا حان وقت المحاضرة (أقل من 5 ثواني وبدأت)
+                if (minDiff <= 5000 && lastNotifiedKey !== lectureUniqueKey) {
+                    lastNotifiedKey = lectureUniqueKey;
+                    localStorage.setItem('lastNotifiedKey', lastNotifiedKey);
+                    playAlertSound();
+                    if (window.Notification && Notification.permission === "granted") {
+                        new Notification(`حان موعد محاضرة: ${nextLecInfo.name}`, {
+                            body: `القاعة: ${nextLecInfo.hall} - ${nextLecInfo.floor}`
+                        });
+                    }
+                }
+
                 let hrs = Math.floor(minDiff / (1000 * 60 * 60));
                 let mins = Math.floor((minDiff % (1000 * 60 * 60)) / (1000 * 60));
                 let secs = Math.floor((minDiff % (1000 * 60)) / 1000);
