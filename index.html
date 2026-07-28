@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إنشاء جدول دراسي </title>
+    <title>إنشاء جدول دراسي</title>
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
@@ -244,7 +244,7 @@
             max-height: 90vh;
             overflow-y: auto;
         }
-        .modal-content input, .modal-content select, .settings-modal-content select {
+        .modal-content input, .modal-content select, .settings-modal-content select, .settings-modal-content input {
             width: 100%;
             padding: 10px;
             margin-top: 6px;
@@ -286,6 +286,28 @@
             cursor: pointer;
             font-size: 0.85rem;
         }
+        .decoded-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .result-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 6px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .result-box span {
+            display: block;
+            font-size: 0.65rem;
+            color: #64748b;
+        }
+        .result-box strong {
+            font-size: 0.85rem;
+            color: #2563eb;
+        }
     </style>
 </head>
 <body>
@@ -295,7 +317,7 @@
             <button class="btn-action" onclick="openModal()">+ إضافة</button>
             <button class="btn-action" onclick="openSettingsModal()">⚙️ الإعدادات</button>
         </div>
-        <h1>الجدول الدراسي الترم الأول</h1>
+        <h1>إنشاء جدول دراسي</h1>
         <p>نظام إدارة المحاضرات والمنبه الذكي</p>
     </header>
 
@@ -361,8 +383,8 @@
             </select>
 
             <input type="text" id="subjName" placeholder="اسم المادة (مثلاً: تجميع حاسب)">
-            <input type="text" id="hall" placeholder="رقم القاعة (مثلاً: 119)">
-            <input type="text" id="floor" placeholder="المبنى والدور (مثلاً: مبنى 2 - الدور 1)">
+            <input type="text" id="hall" placeholder="رقم القاعة أو الرمز الطويل (مثلاً: 1350610110)">
+            <input type="text" id="floor" placeholder="المبنى والدور (اختياري، أو اتركه فارغاً للحساب التلقائي)">
 
             <label style="font-size: 0.75rem; color: #64748b; margin-top: 8px; display: block;">وقت المحاضرة:</label>
             <div class="time-row">
@@ -407,7 +429,7 @@
         </div>
     </div>
 
-    <!-- نافذة الإعدادات -->
+    <!-- نافذة الإعدادات (تحتوي على حاسبة معرفة موقع القاعة) -->
     <div class="modal" id="settingsModal">
         <div class="settings-modal-content">
             <h3 style="margin-top: 0; color: #1e293b; font-size: 1.1rem;">⚙️ الإعدادات المتقدمة</h3>
@@ -426,6 +448,31 @@
                 <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioFile(event)" style="margin-top: 2px; border: none; width: 100%;">
             </div>
 
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;">
+
+            <label style="font-size: 0.8rem; font-weight: bold; color: #1e3a8a; display: block; margin-bottom: 4px;">🔍 فك تشفير رقم القاعة (حاسبة الموقع)</label>
+            <p style="font-size: 0.7rem; color: #64748b; margin: 0 0 8px 0;">الصق رقم المادة الطويل لمعرفة المبنى والدور والغرفة:</p>
+            <input type="text" id="hallCodeInput" placeholder="مثال: 1350610110" oninput="decodeHallCode()">
+            
+            <div class="decoded-results">
+                <div class="result-box">
+                    <span>المبنى</span>
+                    <strong id="resBuilding">--</strong>
+                </div>
+                <div class="result-box">
+                    <span>الدور</span>
+                    <strong id="resFloor">--</strong>
+                </div>
+                <div class="result-box">
+                    <span>الجناح</span>
+                    <strong id="resWing">--</strong>
+                </div>
+                <div class="result-box">
+                    <span>الغرفة</span>
+                    <strong id="resRoom">--</strong>
+                </div>
+            </div>
+
             <div class="modal-btns" style="margin-top: 20px;">
                 <button class="btn-secondary" style="width: 100%;" onclick="closeSettingsModal()">إغلاق</button>
             </div>
@@ -438,9 +485,9 @@
         let activeTab = "الأحد";
         
         let timetableData = JSON.parse(localStorage.getItem('myOfficialTimetable')) || {
-            "الأحد": [{ name: "تجميع حاسب", hall: "119", floor: "مبنى 2 - الدور 1", time: "08:00 ص", rawHour: 8, rawMin: 0, ampm: "ص" }],
-            "الاثنين": [{ name: "فيزياء (عملي)", hall: "208", floor: "مبنى 8 - الدور 2", time: "10:00 ص", rawHour: 10, rawMin: 0, ampm: "ص" }],
-            "الثلاثاء": [{ name: "تطبيقات حاسب", hall: "202", floor: "mبنى 2 - الدور 2", time: "02:00 م", rawHour: 2, rawMin: 0, ampm: "م" }],
+            "الأحد": [{ name: "تجميع حاسب", hall: "1350610110", floor: "المبنى: 06 | الدور: 1", time: "08:00 ص", rawHour: 8, rawMin: 0, ampm: "ص" }],
+            "الاثنين": [],
+            "الثلاثاء": [],
             "الأربعاء": [],
             "الخميس": []
         };
@@ -451,7 +498,30 @@
         let audioContextUnlocked = false;
         let activeAlarmSoundInterval = null;
 
-        // تفعيل الصوت في المتصفح بأول ضغطة زر بالصفحة
+        function decodeHallCode() {
+            let code = document.getElementById('hallCodeInput').value.trim();
+            if(code.length < 9) {
+                document.getElementById('resBuilding').innerText = "--";
+                document.getElementById('resFloor').innerText = "--";
+                document.getElementById('resWing').innerText = "--";
+                document.getElementById('resRoom').innerText = "--";
+                return;
+            }
+            try {
+                let buildingPart = code.substring(3, 5);
+                let floorPart = code.substring(5, 6);
+                let wingPart = code.substring(6, 7);
+                let roomPart = code.substring(7);
+
+                document.getElementById('resBuilding').innerText = "مبنى " + buildingPart;
+                document.getElementById('resFloor').innerText = "دور " + floorPart;
+                document.getElementById('resWing').innerText = "جناح " + wingPart;
+                document.getElementById('resRoom').innerText = "غرفة " + roomPart;
+            } catch(e) {
+                document.getElementById('resBuilding').innerText = "خطأ";
+            }
+        }
+
         document.addEventListener('click', () => {
             if(!audioContextUnlocked) {
                 try {
@@ -564,7 +634,8 @@
                     <div class="lecture-box" data-day="${activeTab}" data-index="${idx}">
                         <div class="lecture-title">💻 ${lec.name}</div>
                         <div class="lecture-info">⏰ ${lec.time}</div>
-                        <div class="lecture-info">📍 قاعة: ${lec.hall} | ${lec.floor}</div>
+                        <div class="lecture-info">📍 الرمز: ${lec.hall}</div>
+                        <div class="lecture-info" style="color: #2563eb; font-weight: bold;">🏢 ${lec.floor}</div>
                     </div>
                 `;
                 container.appendChild(wrapper);
@@ -673,14 +744,27 @@
             const day = document.getElementById('modalDaySelect').value;
             const name = document.getElementById('subjName').value.trim();
             const hall = document.getElementById('hall').value.trim();
-            const floor = document.getElementById('floor').value.trim();
+            let floor = document.getElementById('floor').value.trim();
             const h = document.getElementById('lectureHour').value;
             const m = document.getElementById('lectureMinute').value;
             const ampm = document.getElementById('lectureAmPm').value;
 
-            if(!name || !hall || !floor || !h || !m || !ampm) {
-                alert("الرجاء تعبئة جميع الحقول!");
+            if(!name || !hall || !h || !m || !ampm) {
+                alert("الرجاء تعبئة الحقول الأساسية ووقت المحاضرة!");
                 return;
+            }
+
+            if(!floor && hall.length >= 9) {
+                try {
+                    let b = hall.substring(3, 5);
+                    let f = hall.substring(5, 6);
+                    let r = hall.substring(7);
+                    floor = `المبنى: ${b} | الدور: ${f} | الغرفة: ${r}`;
+                } catch(e) {
+                    floor = "قاعة رقم: " + hall;
+                }
+            } else if(!floor) {
+                floor = "قاعة رقم: " + hall;
             }
 
             const timeStr = `${h}:${m} ${ampm}`;
@@ -716,7 +800,6 @@
 
                         let diff = targetDate - now;
                         
-                        // رصد وصول الوقت بالثانية (إذا وصل العد التنازلي إلى 0 أو أقل من ثانية)
                         if(diff >= 0 && diff <= 1000) {
                             triggerAlarm(lec);
                         }
@@ -738,7 +821,7 @@
                 document.getElementById('cd-mins').innerText = String(mins).padStart(2, '0');
                 document.getElementById('cd-secs').innerText = String(secs).padStart(2, '0');
                 document.getElementById('next-lecture-title').innerText = nextLecInfo.name;
-                document.getElementById('next-lecture-loc').innerText = `📍 قاعة: ${nextLecInfo.hall} - ${nextLecInfo.floor}`;
+                document.getElementById('next-lecture-loc').innerText = `📍 ${nextLecInfo.floor}`;
             } else {
                 document.getElementById('cd-hours').innerText = "00";
                 document.getElementById('cd-mins').innerText = "00";
@@ -749,11 +832,10 @@
         }
 
         function triggerAlarm(lec) {
-            // تجنب تكرار فتح المنبه إذا كان مفتوحاً مسبقاً
             if(document.getElementById('alarmModal').style.display === 'flex') return;
             
             document.getElementById('alarmLectureName').innerText = lec.name;
-            document.getElementById('alarmLectureLoc').innerText = `📍 قاعة: ${lec.hall} - ${lec.floor}`;
+            document.getElementById('alarmLectureLoc').innerText = `📍 ${lec.floor}`;
             document.getElementById('alarmModal').style.display = 'flex';
             startContinuousAlarm();
         }
