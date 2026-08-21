@@ -204,6 +204,31 @@
             z-index: 2;
             transition: transform 0.2s ease;
             touch-action: pan-y;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .lecture-details {
+            flex: 1;
+        }
+        .lecture-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-right: 10px;
+        }
+        .btn-move {
+            background: #e2e8f0;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .btn-move:hover {
+            background: #cbd5e1;
         }
         .lecture-title {
             font-weight: bold;
@@ -314,6 +339,7 @@
 
     <header>
         <div class="header-actions">
+            <button class="btn-action" onclick="openCloudModal()" style="background: #10b981; color: white;">☁️ حفظ/استعراض برقمك</button>
             <button class="btn-action" onclick="openModal()">+ إضافة</button>
             <button class="btn-action" onclick="openSettingsModal()">⚙️ الإعدادات</button>
         </div>
@@ -351,10 +377,29 @@
                 <h2 id="activeDayTitle">الأحد</h2>
                 <button class="btn-primary" style="font-size: 0.75rem; padding: 6px 10px;" onclick="openModalForActiveDay()">+ إضافة لهذا اليوم</button>
             </div>
-            <div class="hint-swipe">💡 اسحب أي محاضرة لجهة اليسار لحذفها (مثل المنبه)</div>
+            <div class="hint-swipe">💡 اسحب أي محاضرة لجهة اليسار لحذفها أو استخدم أزرار الترتيب (▲ ▼)</div>
             <div class="lectures-grid" id="lecturesContainer"></div>
         </div>
 
+    </div>
+
+    <!-- نافذة حفظ واستعراض الجدول السحابي برقم الطالب -->
+    <div class="modal" id="cloudModal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: #1e293b; font-size: 1.1rem;">☁️ مزامنة الجدول السحابية</h3>
+            <p style="font-size: 0.75rem; color: #64748b;">ادخل رقمك الأكاديمي لحفظ جدولك أو جلبه من أي جهاز:</p>
+            
+            <input type="text" id="studentIdInput" placeholder="أدخل الرقم الأكاديمي (مثلاً: 442...)" style="margin-bottom: 10px;">
+            
+            <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+                <button class="btn-primary" onclick="uploadScheduleToCloud()" style="background: #10b981; flex: 1;">💾 حفظ بالرقم</button>
+                <button class="btn-primary" onclick="fetchScheduleFromCloud()" style="background: #3b82f6; flex: 1;">🔍 استعراض الجدول</button>
+            </div>
+
+            <div class="modal-btns">
+                <button class="btn-secondary" style="width: 100%;" onclick="closeCloudModal()">إغلاق</button>
+            </div>
+        </div>
     </div>
 
     <!-- نافذة تنبيه وقت المحاضرة (المنبه) -->
@@ -429,7 +474,7 @@
         </div>
     </div>
 
-    <!-- نافذة الإعدادات (تحتوي على حاسبة معرفة موقع القاعة) -->
+    <!-- نافذة الإعدادات -->
     <div class="modal" id="settingsModal">
         <div class="settings-modal-content">
             <h3 style="margin-top: 0; color: #1e293b; font-size: 1.1rem;">⚙️ الإعدادات المتقدمة</h3>
@@ -480,6 +525,7 @@
     </div>
 
     <script>
+        const MASTER_API_KEY = "$2a$10$Oto9jGnULmOfGM9B2RZCxeOsngUD3j/qg8pdE08o0k11JWKyCPZ1u";
         const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس"];
         const dayIndices = { "الأحد": 0, "الاثنين": 1, "الثلاثاء": 2, "الأربعاء": 3, "الخميس": 4 };
         let activeTab = "الأحد";
@@ -497,6 +543,96 @@
         let pendingDeleteIdx = null;
         let audioContextUnlocked = false;
         let activeAlarmSoundInterval = null;
+
+        function openCloudModal() { document.getElementById('cloudModal').style.display = 'flex'; }
+        function closeCloudModal() { document.getElementById('cloudModal').style.display = 'none'; }
+
+        // دالة حفظ الجدول سحابياً برقم الطالب عبر JSONBin
+        async function uploadScheduleToCloud() {
+            const studentId = document.getElementById('studentIdInput').value.trim();
+            if(!studentId) {
+                alert("الرجاء إدخال الرقم الأكاديمي أولاً!");
+                return;
+            }
+
+            // استخدام واجهة JSONBin العامة كـ Public Bin لتخزين جداول الطلاب
+            try {
+                let response = await fetch('https://api.jsonbin.io/v3/b', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': MASTER_API_KEY,
+                        'X-Bin-Name': `Student_${studentId}`
+                    },
+                    body: JSON.stringify({ studentId: studentId, schedule: timetableData })
+                });
+
+                let result = await response.json();
+                if(response.ok) {
+                    // حفظ معرف الـ Bin المرتبط برقم الطالب في الذاكرة المحلية لجهازه
+                    localStorage.setItem(`bin_${studentId}`, result.metadata.id);
+                    alert("تم حفظ جدولك بنجاح في السحابة برقمك الأكاديمي!");
+                    closeCloudModal();
+                } else {
+                    alert("حدث خطأ أثناء الحفظ، حاول مرة أخرى.");
+                }
+            } catch(e) {
+                alert("تعذر الاتصال بالخادم السحابي.");
+            }
+        }
+
+        // دالة استعراض/جلب الجدول من السحابة بالرقم الأكاديمي
+        async function fetchScheduleFromCloud() {
+            const studentId = document.getElementById('studentIdInput').value.trim();
+            if(!studentId) {
+                alert("الرجاء إدخال الرقم الأكاديمي للاستعراض!");
+                return;
+            }
+
+            let binId = localStorage.getItem(`bin_${studentId}`);
+            
+            // إذا لم يكن مخزناً محلياً، نبحث عبر إنشاء رابط مباشر أو تنبيه الطالب
+            if(!binId) {
+                let manualBinId = prompt("أدخل معرف السحابة الخاص برقمك الأكاديمي (إذا كان لديك):");
+                if(!manualBinId) return;
+                binId = manualBinId;
+            }
+
+            try {
+                let response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+                    headers: {
+                        'X-Master-Key': MASTER_API_KEY
+                    }
+                });
+
+                let result = await response.json();
+                if(response.ok && result.record) {
+                    timetableData = result.record.schedule;
+                    localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
+                    renderTabs();
+                    renderActiveDay();
+                    alert("تم استرجاع الجدول بنجاح!");
+                    closeCloudModal();
+                } else {
+                    alert("لم يتم العثور على جدول بهذا الرقم الأكاديمي.");
+                }
+            } catch(e) {
+                alert("فشل في جلب البيانات من السحابة.");
+            }
+        }
+
+        // دالة تبديل ترتيب المحاضرات (رفع / خفض)
+        function moveLecture(index, direction) {
+            let list = timetableData[activeTab];
+            let targetIndex = index + direction;
+            if (targetIndex >= 0 && targetIndex < list.length) {
+                let temp = list[index];
+                list[index] = list[targetIndex];
+                list[targetIndex] = temp;
+                localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
+                renderActiveDay();
+            }
+        }
 
         function decodeHallCode() {
             let code = document.getElementById('hallCodeInput').value.trim();
@@ -632,10 +768,16 @@
                 wrapper.innerHTML = `
                     <div class="delete-action-bg">حذف</div>
                     <div class="lecture-box" data-day="${activeTab}" data-index="${idx}">
-                        <div class="lecture-title">💻 ${lec.name}</div>
-                        <div class="lecture-info">⏰ ${lec.time}</div>
-                        <div class="lecture-info">📍 الرمز: ${lec.hall}</div>
-                        <div class="lecture-info" style="color: #2563eb; font-weight: bold;">🏢 ${lec.floor}</div>
+                        <div class="lecture-details">
+                            <div class="lecture-title">💻 ${lec.name}</div>
+                            <div class="lecture-info">⏰ ${lec.time}</div>
+                            <div class="lecture-info">📍 الرمز: ${lec.hall}</div>
+                            <div class="lecture-info" style="color: #2563eb; font-weight: bold;">🏢 ${lec.floor}</div>
+                        </div>
+                        <div class="lecture-controls">
+                            <button class="btn-move" onclick="moveLecture(${idx}, -1)" title="تحريك لأعلى">▲</button>
+                            <button class="btn-move" onclick="moveLecture(${idx}, 1)" title="تحريك لأسفل">▼</button>
+                        </div>
                     </div>
                 `;
                 container.appendChild(wrapper);
