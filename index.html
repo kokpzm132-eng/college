@@ -26,7 +26,7 @@
         window.cloudUpload = async function() {
             const studentId = document.getElementById('studentIdInput').value.trim();
             if(!studentId) {
-                alert("الرجاء إدخال الرقم الأكاديمي أولاً!");
+                alert("الرجاء إدخال  كلمت المرور  أولاً!");
                 return;
             }
             try {
@@ -34,7 +34,7 @@
                     schedule: timetableData,
                     updatedAt: new Date().toISOString()
                 });
-                alert("تم حفظ جدولك بنجاح في السحابة برقمك الأكاديمي!");
+                alert("تم حفظ جدولك بنجاح في السحابة  بكلمة المرور !");
                 closeCloudModal();
             } catch(e) {
                 alert("حدث خطأ أثناء الحفظ بالسحابة.");
@@ -44,7 +44,7 @@
         window.cloudFetch = async function() {
             const studentId = document.getElementById('studentIdInput').value.trim();
             if(!studentId) {
-                alert("الرجاء إدخال الرقم الأكاديمي للاستعراض!");
+                alert("الرجاء إدخال كلمت المرور المحفوظة لنسخ  جدول سابق!");
                 return;
             }
             try {
@@ -58,7 +58,7 @@
                     alert("تم استرجاع الجدول بنجاح من السحابة!");
                     closeCloudModal();
                 } else {
-                    alert("لم يتم العثور على جدول مسجل بهذا الرقم الأكاديمي.");
+                    alert("لم يتم العثور على جدول مسجل  بكلمة المرور هذي .");
                 }
             } catch(e) {
                 alert("فشل في جلب البيانات من السحابة.");
