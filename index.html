@@ -3,170 +3,972 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>موقع الجدول الدراسي</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
-        body { font-family: 'Cairo', sans-serif; }
-    </style>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 sm:p-6">
-
-    <div class="max-w-4xl mx-auto space-y-6">
-        <!-- العنوان -->
-        <header class="text-center bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
-            <h1 class="text-2xl sm:text-3xl font-bold text-emerald-400">إدارة الجدول الدراسي الذكي</h1>
-            <p class="text-slate-400 text-sm mt-2">نظم جدولك واحفظه بكلمة مرور لتستعرضه من أي مكان</p>
-        </header>
-
-        <!-- قسم المزامنة بكلمة المرور -->
-        <section class="bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-700 flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div class="w-full sm:w-auto flex-1">
-                <label class="block text-sm font-medium text-slate-300 mb-1">كلمة المرور الخاصة بالجدول:</label>
-                <input type="password" id="passKey" placeholder="أدخل كلمة المرور (مثال: 1234)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
-            </div>
-            <div class="flex gap-2 w-full sm:w-auto">
-                <button onclick="saveToCloud()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold transition">حفظ بكلمة المرور</button>
-                <button onclick="loadFromCloud()" class="flex-1 sm:flex-none bg-sky-600 hover:bg-sky-500 text-white px-5 py-2.5 rounded-xl font-semibold transition">استعراض الجدول</button>
-            </div>
-        </section>
-
-        <!-- محلل النصوص الطويلة -->
-        <section class="bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-700">
-            <h2 class="text-lg font-bold text-emerald-400 mb-2">محلل رموز القاعات التلقائي</h2>
-            <textarea id="longText" rows="3" placeholder="الصق الرمز الطويل هنا ليتم تحليله تلقائياً..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-100 focus:outline-none focus:border-emerald-500 mb-3" oninput="parseLocation()"></textarea>
-            <div id="parseResult" class="text-sm text-slate-300 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                النتيجة ستظهر هنا تلقائياً...
-            </div>
-        </section>
-
-        <!-- الجدول الدراسي -->
-        <section class="bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-700 overflow-x-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-emerald-400">جدول المحاضرات</h2>
-                <button onclick="addRow()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">+ إضافة محاضرة</button>
-            </div>
-            <table class="w-full text-right border-collapse min-w-[600px]">
-                <thead>
-                    <tr class="border-b border-slate-700 text-slate-400 text-sm">
-                        <th class="p-3">اليوم / الوقت</th>
-                        <th class="p-3">المادة</th>
-                        <th class="p-3">المبنى</th>
-                        <th class="p-3">الدور</th>
-                        <th class="p-3">الغرفة</th>
-                        <th class="p-3">إجراء</th>
-                    </tr>
-                </thead>
-                <tbody id="scheduleTable">
-                    <!-- الصفوف تضاف ديناميكياً -->
-                </tbody>
-            </table>
-        </section>
-    </div>
-
-    <!-- Firebase SDKs -->
+    <title>إنشاء جدول دراسي</title>
+    <!-- استيراد مكتبات Firebase السحابية -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            projectId: "kokpzm-62d37"
+            apiKey: "AIzaSyCqhkTqxdTVR08MX-n2x4533vfPnjLfuTQ",
+            authDomain: "kokpzm-62d37.firebaseapp.com",
+            projectId: "kokpzm-62d37",
+            storageBucket: "kokpzm-62d37.firebasestorage.app",
+            messagingSenderId: "502156884548",
+            appId: "1:502156884548:web:d0bf00c4e80db272ab1a11",
+            measurementId: "G-MRX6HDSTKE"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.saveToCloud = async function() {
-            const pass = document.getElementById('passKey').value.trim();
-            if (!pass) {
-                alert('الرجاء إدخال كلمة المرور أولاً!');
+        // ربط الدوال بالنافذة العامة لكي تعمل مع الأزرار
+        window.cloudUpload = async function() {
+            const studentId = document.getElementById('studentIdInput').value.trim();
+            if(!studentId) {
+                alert("الرجاء إدخال الرقم الأكاديمي أولاً!");
                 return;
             }
-            const rows = getTableData();
             try {
-                await setDoc(doc(db, "schedules", pass), { schedule: rows });
-                alert('تم حفظ الجدول بنجاح باستخدام كلمة المرور!');
-            } catch (e) {
-                console.error(e);
-                alert('حدث خطأ أثناء الحفظ.');
+                await setDoc(doc(db, "schedules", studentId), {
+                    schedule: timetableData,
+                    updatedAt: new Date().toISOString()
+                });
+                alert("تم حفظ جدولك بنجاح في السحابة برقمك الأكاديمي!");
+                closeCloudModal();
+            } catch(e) {
+                alert("حدث خطأ أثناء الحفظ بالسحابة.");
             }
         };
 
-        window.loadFromCloud = async function() {
-            const pass = document.getElementById('passKey').value.trim();
-            if (!pass) {
-                alert('الرجاء إدخال كلمة المرور لاستعراض الجدول!');
+        window.cloudFetch = async function() {
+            const studentId = document.getElementById('studentIdInput').value.trim();
+            if(!studentId) {
+                alert("الرجاء إدخال الرقم الأكاديمي للاستعراض!");
                 return;
             }
             try {
-                const docSnap = await getDoc(doc(db, "schedules", pass));
+                const docRef = doc(db, "schedules", studentId);
+                const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    setTableData(docSnap.data().schedule);
-                    alert('تم استعراض الجدول بنجاح!');
+                    timetableData = docSnap.data().schedule;
+                    localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
+                    renderTabs();
+                    renderActiveDay();
+                    alert("تم استرجاع الجدول بنجاح من السحابة!");
+                    closeCloudModal();
                 } else {
-                    alert('لم يتم العثور على جدول بهذا الاسم أو كلمة المرور غير صحيحة.');
+                    alert("لم يتم العثور على جدول مسجل بهذا الرقم الأكاديمي.");
                 }
-            } catch (e) {
-                console.error(e);
-                alert('حدث خطأ أثناء الجلب.');
+            } catch(e) {
+                alert("فشل في جلب البيانات من السحابة.");
             }
         };
     </script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            direction: rtl;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        header {
+            background: var(--primary-gradient);
+            color: white;
+            text-align: center;
+            padding: 30px 15px 70px 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        header h1 {
+            font-size: 1.6rem;
+            margin: 0 0 5px 0;
+            font-weight: 800;
+        }
+        header p {
+            margin: 0;
+            font-size: 0.85rem;
+            opacity: 0.85;
+        }
+        .header-actions {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+        .btn-action {
+            background: white;
+            color: #1e3a8a;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            white-space: nowrap;
+        }
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+        .container {
+            max-width: 900px;
+            margin: -40px auto 30px auto;
+            padding: 0 12px;
+            position: relative;
+            z-index: 5;
+        }
+        .next-lecture-card {
+            background: #1e293b;
+            color: white;
+            border-radius: 14px;
+            padding: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .next-tag {
+            background: #3b82f6;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+        .countdown-grid {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+            width: 100%;
+        }
+        .time-box {
+            background: rgba(255,255,255,0.08);
+            padding: 6px 10px;
+            border-radius: 8px;
+            flex: 1;
+            max-width: 70px;
+        }
+        .time-box span {
+            display: block;
+        }
+        .time-num {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #60a5fa;
+        }
+        .time-label {
+            font-size: 0.65rem;
+            opacity: 0.7;
+        }
+        .days-tabs {
+            display: flex;
+            justify-content: flex-start;
+            gap: 6px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            scrollbar-width: none;
+        }
+        .days-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        .day-tab {
+            background: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #64748b;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .day-tab.active {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
+        .day-content-card {
+            background: white;
+            border-radius: 14px;
+            padding: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .day-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+        .day-header-row h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #1e293b;
+        }
+        .lectures-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .lecture-wrapper {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #ef4444;
+        }
+        .delete-action-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 90px;
+            height: 100%;
+            background: #ef4444;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            z-index: 1;
+        }
+        .lecture-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.2s ease;
+            touch-action: pan-y;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .lecture-details {
+            flex: 1;
+        }
+        .lecture-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-right: 10px;
+        }
+        .btn-move {
+            background: #e2e8f0;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .btn-move:hover {
+            background: #cbd5e1;
+        }
+        .lecture-title {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+        .lecture-info {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin: 3px 0;
+        }
+        .hint-swipe {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .modal-content, .settings-modal-content {
+            background: white;
+            padding: 18px;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 360px;
+            text-align: right;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-content input, .modal-content select, .settings-modal-content select, .settings-modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 0.9rem;
+            background: #fff;
+        }
+        .time-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .modal-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .modal-btns button {
+            flex: 1;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .decoded-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .result-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 6px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .result-box span {
+            display: block;
+            font-size: 0.65rem;
+            color: #64748b;
+        }
+        .result-box strong {
+            font-size: 0.85rem;
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-actions">
+            <button class="btn-action" onclick="openCloudModal()" style="background: #10b981; color: white;">☁️ حفظ/استعراض برقمك</button>
+            <button class="btn-action" onclick="openModal()">+ إضافة</button>
+            <button class="btn-action" onclick="openSettingsModal()">⚙️ الإعدادات</button>
+        </div>
+        <h1>إنشاء جدول دراسي</h1>
+        <p>نظام إدارة المحاضرات والمنبه الذكي</p>
+    </header>
+
+    <div class="container">
+
+        <div class="next-lecture-card">
+            <span class="next-tag">المحاضرة القادمة</span>
+            <div id="next-lecture-title" style="font-size: 1.1rem; font-weight: bold; margin: 4px 0;">جاري التحميل...</div>
+            <div id="next-lecture-loc" style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 8px;">--</div>
+            
+            <div class="countdown-grid">
+                <div class="time-box">
+                    <span class="time-num" id="cd-hours">00</span>
+                    <span class="time-label">ساعة</span>
+                </div>
+                <div class="time-box">
+                    <span class="time-num" id="cd-mins">00</span>
+                    <span class="time-label">دقيقة</span>
+                </div>
+                <div class="time-box">
+                    <span class="time-num" id="cd-secs">00</span>
+                    <span class="time-label">ثانية</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="days-tabs" id="daysTabsContainer"></div>
+
+        <div class="day-content-card">
+            <div class="day-header-row">
+                <h2 id="activeDayTitle">الأحد</h2>
+                <button class="btn-primary" style="font-size: 0.75rem; padding: 6px 10px;" onclick="openModalForActiveDay()">+ إضافة لهذا اليوم</button>
+            </div>
+            <div class="hint-swipe">💡 اسحب أي محاضرة لجهة اليسار لحذفها أو استخدم أزرار الترتيب (▲ ▼)</div>
+            <div class="lectures-grid" id="lecturesContainer"></div>
+        </div>
+
+    </div>
+
+    <!-- نافذة حفظ واستعراض الجدول السحابي برقم الطالب -->
+    <div class="modal" id="cloudModal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: #1e293b; font-size: 1.1rem;">☁️ مزامنة الجدول السحابية</h3>
+            <p style="font-size: 0.75rem; color: #64748b;">ادخل رقمك الأكاديمي لحفظ جدولك أو جلبه من أي جهاز:</p>
+            
+            <input type="text" id="studentIdInput" placeholder="أدخل الرقم الأكاديمي (مثلاً: 442...)" style="margin-bottom: 10px;">
+            
+            <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+                <button class="btn-primary" onclick="window.cloudUpload()" style="background: #10b981; flex: 1;">💾 حفظ بالرقم</button>
+                <button class="btn-primary" onclick="window.cloudFetch()" style="background: #3b82f6; flex: 1;">🔍 استعراض الجدول</button>
+            </div>
+
+            <div class="modal-btns">
+                <button class="btn-secondary" style="width: 100%;" onclick="closeCloudModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تنبيه وقت المحاضرة (المنبه) -->
+    <div class="modal" id="alarmModal" style="z-index: 2000;">
+        <div class="modal-content" style="text-align: center; border: 3px solid #3b82f6;">
+            <div style="font-size: 2.5rem; margin-bottom: 5px;">⏰</div>
+            <h3 style="color: #1e3a8a; margin-top: 0; font-size: 1.2rem;">حان وقت المحاضرة!</h3>
+            <p id="alarmLectureName" style="font-size: 1.05rem; font-weight: bold; color: #1e293b; margin: 10px 0;"></p>
+            <p id="alarmLectureLoc" style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px;"></p>
+            <button class="btn-primary" style="width: 100%; padding: 12px; font-size: 1rem;" onclick="dismissAlarm()">إيقاف المنبه</button>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة محاضرة -->
+    <div class="modal" id="lectureModal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: #1e293b; font-size: 1.1rem;">إضافة محاضرة جديدة</h3>
+            
+            <label style="font-size: 0.75rem; color: #64748b;">اختر اليوم:</label>
+            <select id="modalDaySelect">
+                <option value="الأحد">الأحد</option>
+                <option value="الاثنين">الاثنين</option>
+                <option value="الثلاثاء">الثلاثاء</option>
+                <option value="الأربعاء">الأربعاء</option>
+                <option value="الخميس">الخميس</option>
+            </select>
+
+            <input type="text" id="subjName" placeholder="اسم المادة (مثلاً: تجميع حاسب)">
+            <input type="text" id="hall" placeholder="رقم القاعة أو الرمز الطويل (مثلاً: 1350610110)">
+            <input type="text" id="floor" placeholder="المبنى والدور (اختياري، أو اتركه فارغاً للحساب التلقائي)">
+
+            <label style="font-size: 0.75rem; color: #64748b; margin-top: 8px; display: block;">وقت المحاضرة:</label>
+            <div class="time-row">
+                <select id="lectureHour">
+                    <option value="" disabled selected>الساعة</option>
+                    <script>
+                        for(let h=1; h<=12; h++) document.write(`<option value="${h}">${h}</option>`);
+                    </script>
+                </select>
+                <select id="lectureMinute">
+                    <option value="" disabled selected>الدقيقة</option>
+                    <script>
+                        for(let m=0; m<60; m++) {
+                            let mStr = m < 10 ? '0' + m : m;
+                            document.write(`<option value="${mStr}">${mStr}</option>`);
+                        }
+                    </script>
+                </select>
+                <select id="lectureAmPm">
+                    <option value="" disabled selected>ص / م</option>
+                    <option value="ص">ص</option>
+                    <option value="م">م</option>
+                </select>
+            </div>
+
+            <div class="modal-btns">
+                <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
+                <button class="btn-primary" onclick="saveLecture()">حفظ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تأكيد الحذف -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content" style="text-align: center;">
+            <h3 style="color: #ef4444; margin-top: 0;">⚠️ تأكيد الحذف</h3>
+            <p id="confirmText" style="font-size: 0.9rem; color: #475569;">هل أنت متأكد من حذف هذه المحاضرة؟</p>
+            <div class="modal-btns">
+                <button class="btn-secondary" onclick="closeConfirmModal()">إلغاء</button>
+                <button class="btn-primary" style="background: #ef4444;" id="yesDeleteBtn">حذف</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الإعدادات -->
+    <div class="modal" id="settingsModal">
+        <div class="settings-modal-content">
+            <h3 style="margin-top: 0; color: #1e293b; font-size: 1.1rem;">⚙️ الإعدادات المتقدمة</h3>
+            
+            <label style="font-size: 0.75rem; color: #64748b;">🔊 نغمة التنبيه:</label>
+            <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
+                <select id="soundSelect" onchange="saveSoundPreference()" style="margin-top: 0;">
+                    <option value="classic">رنين افتراضي</option>
+                    <option value="bell">جرس مدرسي</option>
+                    <option value="custom">📁 صوت مخصص من الجهاز</option>
+                </select>
+                <button class="btn-secondary" style="padding: 10px; font-size: 0.75rem;" onclick="testSelectedSound()">تجربة</button>
+            </div>
+            <div id="custom-audio-box" style="display: none; font-size: 0.75rem; color: #475569; margin-top: 6px;">
+                <span>ملف صوتي (MP3/WAV):</span>
+                <input type="file" id="audioFileInput" accept="audio/*" onchange="handleAudioFile(event)" style="margin-top: 2px; border: none; width: 100%;">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;">
+
+            <label style="font-size: 0.8rem; font-weight: bold; color: #1e3a8a; display: block; margin-bottom: 4px;">🔍 فك تشفير رقم القاعة (حاسبة الموقع)</label>
+            <p style="font-size: 0.7rem; color: #64748b; margin: 0 0 8px 0;">الصق رقم المادة الطويل لمعرفة المبنى والدور والغرفة:</p>
+            <input type="text" id="hallCodeInput" placeholder="مثال: 1350610110" oninput="decodeHallCode()">
+            
+            <div class="decoded-results">
+                <div class="result-box">
+                    <span>المبنى</span>
+                    <strong id="resBuilding">--</strong>
+                </div>
+                <div class="result-box">
+                    <span>الدور</span>
+                    <strong id="resFloor">--</strong>
+                </div>
+                <div class="result-box">
+                    <span>الجناح</span>
+                    <strong id="resWing">--</strong>
+                </div>
+                <div class="result-box">
+                    <span>الغرفة</span>
+                    <strong id="resRoom">--</strong>
+                </div>
+            </div>
+
+            <div class="modal-btns" style="margin-top: 20px;">
+                <button class="btn-secondary" style="width: 100%;" onclick="closeSettingsModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        function addRow(data = {}) {
-            const tbody = document.getElementById('scheduleTable');
-            const tr = document.createElement('tr');
-            tr.className = 'border-b border-slate-700/50 hover:bg-slate-700/20';
-            tr.innerHTML = `
-                <td class="p-3"><input type="text" value="${data.time || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100"></td>
-                <td class="p-3"><input type="text" value="${data.subject || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100"></td>
-                <td class="p-3"><input type="text" value="${data.building || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 building-input"></td>
-                <td class="p-3"><input type="text" value="${data.floor || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 floor-input"></td>
-                <td class="p-3"><input type="text" value="${data.room || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 room-input"></td>
-                <td class="p-3"><button onclick="this.parentElement.parentElement.remove()" class="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs transition">حذف</button></td>
-            `;
-            tbody.appendChild(tr);
+        const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس"];
+        const dayIndices = { "الأحد": 0, "الاثنين": 1, "الثلاثاء": 2, "الأربعاء": 3, "الخميس": 4 };
+        let activeTab = "الأحد";
+        
+        let timetableData = JSON.parse(localStorage.getItem('myOfficialTimetable')) || {
+            "الأحد": [{ name: "تجميع حاسب", hall: "1350610110", floor: "المبنى: 06 | الدور: 1", time: "08:00 ص", rawHour: 8, rawMin: 0, ampm: "ص" }],
+            "الاثنين": [],
+            "الثلاثاء": [],
+            "الأربعاء": [],
+            "الخميس": []
+        };
+
+        let customAudioData = localStorage.getItem('officialAudioData') || null;
+        let pendingDeleteDay = null;
+        let pendingDeleteIdx = null;
+        let audioContextUnlocked = false;
+        let activeAlarmSoundInterval = null;
+
+        function openCloudModal() { document.getElementById('cloudModal').style.display = 'flex'; }
+        function closeCloudModal() { document.getElementById('cloudModal').style.display = 'none'; }
+
+        function moveLecture(index, direction) {
+            let list = timetableData[activeTab];
+            let targetIndex = index + direction;
+            if (targetIndex >= 0 && targetIndex < list.length) {
+                let temp = list[index];
+                list[index] = list[targetIndex];
+                list[targetIndex] = temp;
+                localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
+                renderActiveDay();
+            }
         }
 
-        function getTableData() {
-            const rows = [];
-            document.querySelectorAll('#scheduleTable tr').forEach(tr => {
-                const inputs = tr.querySelectorAll('input');
-                rows.push({
-                    time: inputs[0].value,
-                    subject: inputs[1].value,
-                    building: inputs[2].value,
-                    floor: inputs[3].value,
-                    room: inputs[4].value
-                });
+        function decodeHallCode() {
+            let code = document.getElementById('hallCodeInput').value.trim();
+            if(code.length < 9) {
+                document.getElementById('resBuilding').innerText = "--";
+                document.getElementById('resFloor').innerText = "--";
+                document.getElementById('resWing').innerText = "--";
+                document.getElementById('resRoom').innerText = "--";
+                return;
+            }
+            try {
+                let buildingPart = code.substring(3, 5);
+                let floorPart = code.substring(5, 6);
+                let wingPart = code.substring(6, 7);
+                let roomPart = code.substring(7);
+
+                document.getElementById('resBuilding').innerText = "مبنى " + buildingPart;
+                document.getElementById('resFloor').innerText = "دور " + floorPart;
+                document.getElementById('resWing').innerText = "جناح " + wingPart;
+                document.getElementById('resRoom').innerText = "غرفة " + roomPart;
+            } catch(e) {
+                document.getElementById('resBuilding').innerText = "خطأ";
+            }
+        }
+
+        document.addEventListener('click', () => {
+            if(!audioContextUnlocked) {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    ctx.resume();
+                } catch(e) {}
+                audioContextUnlocked = true;
+            }
+        }, { once: true });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedSound = localStorage.getItem('officialSound') || 'classic';
+            document.getElementById('soundSelect').value = savedSound;
+            if(savedSound === 'custom') document.getElementById('custom-audio-box').style.display = 'block';
+            
+            renderTabs();
+            renderActiveDay();
+        });
+
+        function saveSoundPreference() {
+            const val = document.getElementById('soundSelect').value;
+            localStorage.setItem('officialSound', val);
+            document.getElementById('custom-audio-box').style.display = (val === 'custom') ? 'block' : 'none';
+            testSelectedSound();
+        }
+
+        function handleAudioFile(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    customAudioData = evt.target.result;
+                    localStorage.setItem('officialAudioData', customAudioData);
+                    alert("تم حفظ الصوت المخصص بنجاح!");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function playAlertSound() {
+            const soundType = document.getElementById('soundSelect').value;
+            if(soundType === 'custom' && customAudioData) {
+                const audio = new Audio(customAudioData);
+                audio.play().catch(e => {});
+                return;
+            }
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                let osc = ctx.createOscillator();
+                let gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } catch(e) {}
+        }
+
+        function startContinuousAlarm() {
+            playAlertSound();
+            if(activeAlarmSoundInterval) clearInterval(activeAlarmSoundInterval);
+            activeAlarmSoundInterval = setInterval(() => {
+                playAlertSound();
+            }, 1500);
+        }
+
+        function dismissAlarm() {
+            if(activeAlarmSoundInterval) {
+                clearInterval(activeAlarmSoundInterval);
+                activeAlarmSoundInterval = null;
+            }
+            document.getElementById('alarmModal').style.display = 'none';
+        }
+
+        function testSelectedSound() { playAlertSound(); }
+
+        function renderTabs() {
+            const container = document.getElementById('daysTabsContainer');
+            container.innerHTML = "";
+            days.forEach(day => {
+                let activeClass = (day === activeTab) ? "active" : "";
+                container.innerHTML += `<button class="day-tab ${activeClass}" onclick="switchDay('${day}')">${day}</button>`;
             });
-            return rows;
         }
 
-        function setTableData(rows) {
-            document.getElementById('scheduleTable').innerHTML = '';
-            if (rows && rows.length > 0) {
-                rows.forEach(row => addRow(row));
+        function switchDay(day) {
+            activeTab = day;
+            renderTabs();
+            renderActiveDay();
+        }
+
+        function renderActiveDay() {
+            document.getElementById('activeDayTitle').innerText = activeTab;
+            const container = document.getElementById('lecturesContainer');
+            container.innerHTML = "";
+
+            let list = timetableData[activeTab] || [];
+            if(list.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 15px; font-size: 0.85rem;">لا توجد محاضرات مسجلة في هذا اليوم</div>`;
+                return;
+            }
+
+            list.forEach((lec, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'lecture-wrapper';
+                wrapper.innerHTML = `
+                    <div class="delete-action-bg">حذف</div>
+                    <div class="lecture-box" data-day="${activeTab}" data-index="${idx}">
+                        <div class="lecture-details">
+                            <div class="lecture-title">💻 ${lec.name}</div>
+                            <div class="lecture-info">⏰ ${lec.time}</div>
+                            <div class="lecture-info">📍 الرمز: ${lec.hall}</div>
+                            <div class="lecture-info" style="color: #2563eb; font-weight: bold;">🏢 ${lec.floor}</div>
+                        </div>
+                        <div class="lecture-controls">
+                            <button class="btn-move" onclick="moveLecture(${idx}, -1)" title="تحريك لأعلى">▲</button>
+                            <button class="btn-move" onclick="moveLecture(${idx}, 1)" title="تحريك لأسفل">▼</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(wrapper);
+                initSwipeToDelete(wrapper, activeTab, idx, lec.name);
+            });
+        }
+
+        function initSwipeToDelete(wrapper, day, idx, name) {
+            const box = wrapper.querySelector('.lecture-box');
+            let startX = 0;
+            let currentX = 0;
+            let isSwiping = false;
+            const threshold = -80;
+
+            box.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                isSwiping = true;
+                box.style.transition = 'none';
+            }, {passive: true});
+
+            box.addEventListener('touchmove', (e) => {
+                if(!isSwiping) return;
+                currentX = e.touches[0].clientX - startX;
+                if(currentX < 0) {
+                    box.style.transform = `translateX(${Math.max(currentX, -100)}px)`;
+                } else {
+                    box.style.transform = `translateX(0px)`;
+                }
+            }, {passive: true});
+
+            box.addEventListener('touchend', () => {
+                if(!isSwiping) return;
+                isSwiping = false;
+                box.style.transition = 'transform 0.2s ease';
+                if(currentX < threshold) {
+                    box.style.transform = `translateX(-90px)`;
+                    triggerDeleteConfirmation(day, idx, name, box);
+                } else {
+                    box.style.transform = `translateX(0px)`;
+                }
+                currentX = 0;
+            });
+
+            let mStartX = 0;
+            let mDragging = false;
+            box.addEventListener('mousedown', (e) => {
+                mStartX = e.clientX;
+                mDragging = true;
+                box.style.transition = 'none';
+            });
+            window.addEventListener('mousemove', (e) => {
+                if(!mDragging) return;
+                let diff = e.clientX - mStartX;
+                if(diff < 0) {
+                    box.style.transform = `translateX(${Math.max(diff, -100)}px)`;
+                }
+            });
+            window.addEventListener('mouseup', (e) => {
+                if(!mDragging) return;
+                mDragging = false;
+                box.style.transition = 'transform 0.2s ease';
+                let diff = e.clientX - mStartX;
+                if(diff < threshold) {
+                    box.style.transform = `translateX(-90px)`;
+                    triggerDeleteConfirmation(day, idx, name, box);
+                } else {
+                    box.style.transform = `translateX(0px)`;
+                }
+            });
+
+            wrapper.querySelector('.delete-action-bg').onclick = () => {
+                triggerDeleteConfirmation(day, idx, name, box);
+            };
+        }
+
+        function triggerDeleteConfirmation(day, idx, name, boxElem) {
+            pendingDeleteDay = day;
+            pendingDeleteIdx = idx;
+            document.getElementById('confirmText').innerText = `هل تريد حذف محاضرة "${name}"؟`;
+            document.getElementById('confirmModal').style.display = 'flex';
+            
+            document.getElementById('yesDeleteBtn').onclick = function() {
+                timetableData[pendingDeleteDay].splice(pendingDeleteIdx, 1);
+                localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
+                closeConfirmModal();
+                renderActiveDay();
+            };
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            renderActiveDay();
+        }
+
+        function openModal() { document.getElementById('lectureModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('lectureModal').style.display = 'none'; }
+        function openSettingsModal() { document.getElementById('settingsModal').style.display = 'flex'; }
+        function closeSettingsModal() { document.getElementById('settingsModal').style.display = 'none'; }
+
+        function openModalForActiveDay() {
+            document.getElementById('modalDaySelect').value = activeTab;
+            openModal();
+        }
+
+        function saveLecture() {
+            const day = document.getElementById('modalDaySelect').value;
+            const name = document.getElementById('subjName').value.trim();
+            const hall = document.getElementById('hall').value.trim();
+            let floor = document.getElementById('floor').value.trim();
+            const h = document.getElementById('lectureHour').value;
+            const m = document.getElementById('lectureMinute').value;
+            const ampm = document.getElementById('lectureAmPm').value;
+
+            if(!name || !hall || !h || !m || !ampm) {
+                alert("الرجاء تعبئة الحقول الأساسية ووقت المحاضرة!");
+                return;
+            }
+
+            if(!floor && hall.length >= 9) {
+                try {
+                    let b = hall.substring(3, 5);
+                    let f = hall.substring(5, 6);
+                    let r = hall.substring(7);
+                    floor = `المبنى: ${b} | الدور: ${f} | الغرفة: ${r}`;
+                } catch(e) {
+                    floor = "قاعة رقم: " + hall;
+                }
+            } else if(!floor) {
+                floor = "قاعة رقم: " + hall;
+            }
+
+            const timeStr = `${h}:${m} ${ampm}`;
+            if(!timetableData[day]) timetableData[day] = [];
+            
+            timetableData[day].push({ name, hall, floor, time: timeStr, rawHour: parseInt(h), rawMin: parseInt(m), ampm });
+            localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
+            
+            closeModal();
+            activeTab = day;
+            renderTabs();
+            renderActiveDay();
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const curDayIdx = now.getDay();
+            let minDiff = Infinity;
+            let nextLecInfo = null;
+
+            for(let i=0; i<7; i++) {
+                let targetIdx = (curDayIdx + i) % 7;
+                let dayName = Object.keys(dayIndices).find(k => dayIndices[k] === targetIdx);
+                if(dayName && timetableData[dayName]) {
+                    timetableData[dayName].forEach(lec => {
+                        let hr = lec.rawHour;
+                        if(lec.ampm === 'م' && hr !== 12) hr += 12;
+                        if(lec.ampm === 'ص' && hr === 12) hr = 0;
+
+                        let targetDate = new Date();
+                        targetDate.setDate(now.getDate() + i);
+                        targetDate.setHours(hr, lec.rawMin, 0, 0);
+
+                        let diff = targetDate - now;
+                        
+                        if(diff >= 0 && diff <= 1000) {
+                            triggerAlarm(lec);
+                        }
+
+                        if(diff > 0 && diff < minDiff) {
+                            minDiff = diff;
+                            nextLecInfo = lec;
+                        }
+                    });
+                }
+            }
+
+            if(nextLecInfo) {
+                let hrs = Math.floor(minDiff / (1000 * 60 * 60));
+                let mins = Math.floor((minDiff % (1000 * 60 * 60)) / (1000 * 60));
+                let secs = Math.floor((minDiff % (1000 * 60)) / 1000);
+
+                document.getElementById('cd-hours').innerText = String(hrs).padStart(2, '0');
+                document.getElementById('cd-mins').innerText = String(mins).padStart(2, '0');
+                document.getElementById('cd-secs').innerText = String(secs).padStart(2, '0');
+                document.getElementById('next-lecture-title').innerText = nextLecInfo.name;
+                document.getElementById('next-lecture-loc').innerText = `📍 ${nextLecInfo.floor}`;
             } else {
-                addRow();
+                document.getElementById('cd-hours').innerText = "00";
+                document.getElementById('cd-mins').innerText = "00";
+                document.getElementById('cd-secs').innerText = "00";
+                document.getElementById('next-lecture-title').innerText = "لا توجد محاضرات قادمة";
+                document.getElementById('next-lecture-loc').innerText = "--";
             }
         }
 
-        function parseLocation() {
-            const text = document.getElementById('longText').value;
-            const resultDiv = document.getElementById('parseResult');
-            // مثال بسيط للتحليل، يمكنك تعديله حسب صيغة الرموز لديك
-            if (text.length > 5) {
-                resultDiv.innerHTML = `تم تحليل النص: <span class="text-emerald-400 font-semibold">مبنى (مستخلص)، دور (مستخلص)، غرفة (مستخلص)</span>`;
-            } else {
-                resultDiv.innerHTML = `النتيجة ستظهر هنا تلقائياً...`;
-            }
+        function triggerAlarm(lec) {
+            if(document.getElementById('alarmModal').style.display === 'flex') return;
+            
+            document.getElementById('alarmLectureName').innerText = lec.name;
+            document.getElementById('alarmLectureLoc').innerText = `📍 ${lec.floor}`;
+            document.getElementById('alarmModal').style.display = 'flex';
+            startContinuousAlarm();
         }
 
-        // إضافة صف افتراضي عند التحميل
-        window.onload = () => { addRow(); };
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
     </script>
 </body>
 </html>
