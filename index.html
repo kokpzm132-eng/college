@@ -4,6 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إنشاء جدول دراسي</title>
+    <!-- استيراد مكتبات Firebase السحابية -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqhkTqxdTVR08MX-n2x4533vfPnjLfuTQ",
+            authDomain: "kokpzm-62d37.firebaseapp.com",
+            projectId: "kokpzm-62d37",
+            storageBucket: "kokpzm-62d37.firebasestorage.app",
+            messagingSenderId: "502156884548",
+            appId: "1:502156884548:web:d0bf00c4e80db272ab1a11",
+            measurementId: "G-MRX6HDSTKE"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ربط الدوال بالنافذة العامة لكي تعمل مع الأزرار
+        window.cloudUpload = async function() {
+            const studentId = document.getElementById('studentIdInput').value.trim();
+            if(!studentId) {
+                alert("الرجاء إدخال الرقم الأكاديمي أولاً!");
+                return;
+            }
+            try {
+                await setDoc(doc(db, "schedules", studentId), {
+                    schedule: timetableData,
+                    updatedAt: new Date().toISOString()
+                });
+                alert("تم حفظ جدولك بنجاح في السحابة برقمك الأكاديمي!");
+                closeCloudModal();
+            } catch(e) {
+                alert("حدث خطأ أثناء الحفظ بالسحابة.");
+            }
+        };
+
+        window.cloudFetch = async function() {
+            const studentId = document.getElementById('studentIdInput').value.trim();
+            if(!studentId) {
+                alert("الرجاء إدخال الرقم الأكاديمي للاستعراض!");
+                return;
+            }
+            try {
+                const docRef = doc(db, "schedules", studentId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    timetableData = docSnap.data().schedule;
+                    localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
+                    renderTabs();
+                    renderActiveDay();
+                    alert("تم استرجاع الجدول بنجاح من السحابة!");
+                    closeCloudModal();
+                } else {
+                    alert("لم يتم العثور على جدول مسجل بهذا الرقم الأكاديمي.");
+                }
+            } catch(e) {
+                alert("فشل في جلب البيانات من السحابة.");
+            }
+        };
+    </script>
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
@@ -392,8 +453,8 @@
             <input type="text" id="studentIdInput" placeholder="أدخل الرقم الأكاديمي (مثلاً: 442...)" style="margin-bottom: 10px;">
             
             <div style="display: flex; gap: 6px; margin-bottom: 10px;">
-                <button class="btn-primary" onclick="uploadScheduleToCloud()" style="background: #10b981; flex: 1;">💾 حفظ بالرقم</button>
-                <button class="btn-primary" onclick="fetchScheduleFromCloud()" style="background: #3b82f6; flex: 1;">🔍 استعراض الجدول</button>
+                <button class="btn-primary" onclick="window.cloudUpload()" style="background: #10b981; flex: 1;">💾 حفظ بالرقم</button>
+                <button class="btn-primary" onclick="window.cloudFetch()" style="background: #3b82f6; flex: 1;">🔍 استعراض الجدول</button>
             </div>
 
             <div class="modal-btns">
@@ -525,7 +586,6 @@
     </div>
 
     <script>
-        const MASTER_API_KEY = "$2a$10$Oto9jGnULmOfGM9B2RZCxeOsngUD3j/qg8pdE08o0k11JWKyCPZ1u";
         const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس"];
         const dayIndices = { "الأحد": 0, "الاثنين": 1, "الثلاثاء": 2, "الأربعاء": 3, "الخميس": 4 };
         let activeTab = "الأحد";
@@ -547,81 +607,6 @@
         function openCloudModal() { document.getElementById('cloudModal').style.display = 'flex'; }
         function closeCloudModal() { document.getElementById('cloudModal').style.display = 'none'; }
 
-        // دالة حفظ الجدول سحابياً برقم الطالب عبر JSONBin
-        async function uploadScheduleToCloud() {
-            const studentId = document.getElementById('studentIdInput').value.trim();
-            if(!studentId) {
-                alert("الرجاء إدخال الرقم الأكاديمي أولاً!");
-                return;
-            }
-
-            // استخدام واجهة JSONBin العامة كـ Public Bin لتخزين جداول الطلاب
-            try {
-                let response = await fetch('https://api.jsonbin.io/v3/b', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': MASTER_API_KEY,
-                        'X-Bin-Name': `Student_${studentId}`
-                    },
-                    body: JSON.stringify({ studentId: studentId, schedule: timetableData })
-                });
-
-                let result = await response.json();
-                if(response.ok) {
-                    // حفظ معرف الـ Bin المرتبط برقم الطالب في الذاكرة المحلية لجهازه
-                    localStorage.setItem(`bin_${studentId}`, result.metadata.id);
-                    alert("تم حفظ جدولك بنجاح في السحابة برقمك الأكاديمي!");
-                    closeCloudModal();
-                } else {
-                    alert("حدث خطأ أثناء الحفظ، حاول مرة أخرى.");
-                }
-            } catch(e) {
-                alert("تعذر الاتصال بالخادم السحابي.");
-            }
-        }
-
-        // دالة استعراض/جلب الجدول من السحابة بالرقم الأكاديمي
-        async function fetchScheduleFromCloud() {
-            const studentId = document.getElementById('studentIdInput').value.trim();
-            if(!studentId) {
-                alert("الرجاء إدخال الرقم الأكاديمي للاستعراض!");
-                return;
-            }
-
-            let binId = localStorage.getItem(`bin_${studentId}`);
-            
-            // إذا لم يكن مخزناً محلياً، نبحث عبر إنشاء رابط مباشر أو تنبيه الطالب
-            if(!binId) {
-                let manualBinId = prompt("أدخل معرف السحابة الخاص برقمك الأكاديمي (إذا كان لديك):");
-                if(!manualBinId) return;
-                binId = manualBinId;
-            }
-
-            try {
-                let response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-                    headers: {
-                        'X-Master-Key': MASTER_API_KEY
-                    }
-                });
-
-                let result = await response.json();
-                if(response.ok && result.record) {
-                    timetableData = result.record.schedule;
-                    localStorage.setItem('myOfficialTimetable', JSON.stringify(timetableData));
-                    renderTabs();
-                    renderActiveDay();
-                    alert("تم استرجاع الجدول بنجاح!");
-                    closeCloudModal();
-                } else {
-                    alert("لم يتم العثور على جدول بهذا الرقم الأكاديمي.");
-                }
-            } catch(e) {
-                alert("فشل في جلب البيانات من السحابة.");
-            }
-        }
-
-        // دالة تبديل ترتيب المحاضرات (رفع / خفض)
         function moveLecture(index, direction) {
             let list = timetableData[activeTab];
             let targetIndex = index + direction;
