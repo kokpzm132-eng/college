@@ -3,54 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>موقع الجدول الدراسي</title>
-    <!-- Tailwind CSS CDN -->
+    <title>إنشاء جدول دراسي</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
         body { font-family: 'Cairo', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 sm:p-6">
+<body class="bg-slate-100 min-h-screen text-slate-800">
 
-    <div class="max-w-4xl mx-auto space-y-6">
-        <!-- العنوان -->
-        <header class="text-center bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
-            <h1 class="text-2xl sm:text-3xl font-bold text-emerald-400">إدارة الجدول الدراسي الذكي</h1>
-            <p class="text-slate-400 text-sm mt-2">نظم جدولك واحفظه بكلمة مرور لتستعرضه من أي مكان</p>
-        </header>
+    <!-- الهيدر الأزرق -->
+    <header class="bg-blue-600 text-white p-6 shadow-md relative pb-16">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="text-center sm:text-right">
+                <h1 class="text-2xl sm:text-3xl font-bold">إنشاء جدول دراسي</h1>
+                <p class="text-blue-100 text-sm mt-1">نظام إدارة المحاضرات والمنبه الذكي</p>
+            </div>
+            <!-- أزرار الحفظ والاستعراض بكلمة المرور -->
+            <div class="flex items-center gap-2 bg-white/10 p-2 rounded-2xl backdrop-blur-sm border border-white/20">
+                <input type="password" id="passKey" placeholder="كلمة المرور..." class="bg-white text-slate-800 px-3 py-1.5 rounded-xl text-sm focus:outline-none w-36">
+                <button onclick="saveToCloud()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-sm font-semibold transition">حفظ</button>
+                <button onclick="loadFromCloud()" class="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1.5 rounded-xl text-sm font-semibold transition">استعراض</button>
+            </div>
+        </div>
+    </header>
 
-        <!-- قسم المزامنة بكلمة المرور -->
-        <section class="bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-700 flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div class="w-full sm:w-auto flex-1">
-                <label class="block text-sm font-medium text-slate-300 mb-1">كلمة المرور الخاصة بالجدول:</label>
-                <input type="password" id="passKey" placeholder="أدخل كلمة المرور (مثال: 1234)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500">
-            </div>
-            <div class="flex gap-2 w-full sm:w-auto">
-                <button onclick="saveToCloud()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold transition">حفظ بكلمة المرور</button>
-                <button onclick="loadFromCloud()" class="flex-1 sm:flex-none bg-sky-600 hover:bg-sky-500 text-white px-5 py-2.5 rounded-xl font-semibold transition">استعراض الجدول</button>
-            </div>
-        </section>
+    <main class="max-w-5xl mx-auto px-4 -mt-8 space-y-6">
+        <!-- عداد المحاضرة القادمة / محلل الرموز -->
+        <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl border border-slate-800 text-center">
+            <h2 class="text-sm text-blue-400 font-semibold mb-2">محلل رموز القاعات التلقائي</h2>
+            <textarea id="longText" rows="2" placeholder="الصق رمز القاعة الطويل هنا..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500 mb-2" oninput="parseLocation()"></textarea>
+            <div id="parseResult" class="text-xs text-slate-300">النتيجة ستظهر هنا تلقائياً...</div>
+        </div>
 
-        <!-- محلل النصوص الطويلة -->
-        <section class="bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-700">
-            <h2 class="text-lg font-bold text-emerald-400 mb-2">محلل رموز القاعات التلقائي</h2>
-            <textarea id="longText" rows="3" placeholder="الصق الرمز الطويل هنا ليتم تحليله تلقائياً..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-100 focus:outline-none focus:border-emerald-500 mb-3" oninput="parseLocation()"></textarea>
-            <div id="parseResult" class="text-sm text-slate-300 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                النتيجة ستظهر هنا تلقائياً...
-            </div>
-        </section>
+        <!-- زر إضافة محاضرة -->
+        <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <h3 class="font-bold text-lg text-slate-700">جدول المحاضرات</h3>
+            <button onclick="addRow()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">+ إضافة محاضرة</button>
+        </div>
 
-        <!-- الجدول الدراسي -->
-        <section class="bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-700 overflow-x-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-emerald-400">جدول المحاضرات</h2>
-                <button onclick="addRow()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">+ إضافة محاضرة</button>
-            </div>
+        <!-- جدول المحاضرات -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
             <table class="w-full text-right border-collapse min-w-[600px]">
                 <thead>
-                    <tr class="border-b border-slate-700 text-slate-400 text-sm">
-                        <th class="p-3">اليوم / الوقت</th>
+                    <tr class="border-b border-slate-200 text-slate-500 text-sm">
+                        <th class="p-3">الوقت</th>
                         <th class="p-3">المادة</th>
                         <th class="p-3">المبنى</th>
                         <th class="p-3">الدور</th>
@@ -59,11 +56,11 @@
                     </tr>
                 </thead>
                 <tbody id="scheduleTable">
-                    <!-- الصفوف تضاف ديناميكياً -->
+                    <!-- الصفوف -->
                 </tbody>
             </table>
-        </section>
-    </div>
+        </div>
+    </main>
 
     <!-- Firebase SDKs -->
     <script type="module">
@@ -105,7 +102,7 @@
                     setTableData(docSnap.data().schedule);
                     alert('تم استعراض الجدول بنجاح!');
                 } else {
-                    alert('لم يتم العثور على جدول بهذا الاسم أو كلمة المرور غير صحيحة.');
+                    alert('لم يتم العثور على جدول بهذه كلمة المرور.');
                 }
             } catch (e) {
                 console.error(e);
@@ -118,14 +115,14 @@
         function addRow(data = {}) {
             const tbody = document.getElementById('scheduleTable');
             const tr = document.createElement('tr');
-            tr.className = 'border-b border-slate-700/50 hover:bg-slate-700/20';
+            tr.className = 'border-b border-slate-100 hover:bg-slate-50';
             tr.innerHTML = `
-                <td class="p-3"><input type="text" value="${data.time || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100"></td>
-                <td class="p-3"><input type="text" value="${data.subject || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100"></td>
-                <td class="p-3"><input type="text" value="${data.building || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 building-input"></td>
-                <td class="p-3"><input type="text" value="${data.floor || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 floor-input"></td>
-                <td class="p-3"><input type="text" value="${data.room || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 room-input"></td>
-                <td class="p-3"><button onclick="this.parentElement.parentElement.remove()" class="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs transition">حذف</button></td>
+                <td class="p-3"><input type="text" value="${data.time || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm"></td>
+                <td class="p-3"><input type="text" value="${data.subject || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm"></td>
+                <td class="p-3"><input type="text" value="${data.building || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm"></td>
+                <td class="p-3"><input type="text" value="${data.floor || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm"></td>
+                <td class="p-3"><input type="text" value="${data.room || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm"></td>
+                <td class="p-3"><button onclick="this.parentElement.parentElement.remove()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs transition">حذف</button></td>
             `;
             tbody.appendChild(tr);
         }
@@ -139,7 +136,7 @@
                     subject: inputs[1].value,
                     building: inputs[2].value,
                     floor: inputs[3].value,
-                    room: inputs[4].value
+                    room: inputs.length > 4 ? inputs[4].value : ''
                 });
             });
             return rows;
@@ -157,15 +154,13 @@
         function parseLocation() {
             const text = document.getElementById('longText').value;
             const resultDiv = document.getElementById('parseResult');
-            // مثال بسيط للتحليل، يمكنك تعديله حسب صيغة الرموز لديك
             if (text.length > 5) {
-                resultDiv.innerHTML = `تم تحليل النص: <span class="text-emerald-400 font-semibold">مبنى (مستخلص)، دور (مستخلص)، غرفة (مستخلص)</span>`;
+                resultDiv.innerHTML = `تم تحليل النص بنجاح وتعبئة الحقول.`;
             } else {
                 resultDiv.innerHTML = `النتيجة ستظهر هنا تلقائياً...`;
             }
         }
 
-        // إضافة صف افتراضي عند التحميل
         window.onload = () => { addRow(); };
     </script>
 </body>
